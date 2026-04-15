@@ -27,11 +27,11 @@ env:
   ASPNETCORE_URLS: http://+:8080
 
 ingress:
-  enabled: false
+  enabled: true
   className: ""
   annotations: {}
   hosts:
-    - host: realtime.local
+    - host: test-csharp-ws.brader.id
       paths:
         - path: /
           pathType: Prefix
