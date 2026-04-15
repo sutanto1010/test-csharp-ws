@@ -141,6 +141,42 @@ cd deploy/docker-compose
 docker compose down
 ```
 
+## Kubernetes Deployment
+
+Use the Helm chart under `deploy/k8s/realtime-demo`:
+
+```bash
+helm upgrade --install realtime-demo ./deploy/k8s/realtime-demo \
+  --namespace realtime-demo \
+  --create-namespace \
+  --set image.repository=ghcr.io/your-org/realtimedemo-api \
+  --set image.tag=latest
+```
+
+Useful follow-up commands:
+
+```bash
+helm lint ./deploy/k8s/realtime-demo
+helm template realtime-demo ./deploy/k8s/realtime-demo
+kubectl get pods -n realtime-demo
+kubectl port-forward -n realtime-demo svc/realtime-demo 8080:80
+```
+
+Ingress can be enabled through values:
+
+```bash
+helm upgrade --install realtime-demo ./deploy/k8s/realtime-demo \
+  --namespace realtime-demo \
+  --create-namespace \
+  --set image.repository=ghcr.io/your-org/realtimedemo-api \
+  --set image.tag=latest \
+  --set ingress.enabled=true \
+  --set ingress.className=nginx \
+  --set ingress.hosts[0].host=realtime.example.com
+```
+
+See `deploy/k8s/README.md` for the full Kubernetes deployment notes.
+
 ## Linux Deployment
 
 Framework-dependent publish for Linux:
