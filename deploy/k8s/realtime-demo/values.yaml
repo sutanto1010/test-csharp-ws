@@ -31,7 +31,7 @@ ingress:
   className: ""
   annotations: {}
   hosts:
-    - host: test-csharp-ws.sutananto.net
+    - host: test-csharp-ws.sutanto.net
       paths:
         - path: /
           pathType: Prefix
