@@ -118,6 +118,29 @@ After a `POST /api/notes`, connected clients receive a payload similar to:
 dotnet test
 ```
 
+## Docker Compose Deployment
+
+Use the compose deployment under `deploy/docker-compose`:
+
+```bash
+cd deploy/docker-compose
+cp .env.example .env
+docker compose up --build -d
+```
+
+Default URLs:
+
+- Swagger: [http://localhost:8080/swagger](http://localhost:8080/swagger)
+- Health: [http://localhost:8080/health](http://localhost:8080/health)
+- WebSocket: `ws://localhost:8080/ws/notes`
+
+Stop the deployment:
+
+```bash
+cd deploy/docker-compose
+docker compose down
+```
+
 ## Linux Deployment
 
 Framework-dependent publish for Linux:

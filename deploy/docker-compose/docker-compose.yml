@@ -1,0 +1,14 @@
+services:
+  api:
+    image: realtimedemo-api:local
+    container_name: realtimedemo-api
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_URLS: http://+:8080
+    ports:
+      - "${HOST_PORT:-8080}:8080"
+    restart: unless-stopped
+    init: true
