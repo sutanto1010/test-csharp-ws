@@ -1,0 +1,75 @@
+kind: pipeline
+type: docker
+name: realtime-demo
+
+volumes:
+  - name: dockersock
+    host:
+      path: /var/run/docker.sock
+  - name: nuget-cache
+    host:
+      path: /tmp/drone-cache/nuget
+
+steps:
+  - name: test
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    environment:
+      NUGET_PACKAGES: /root/.nuget/packages
+    volumes:
+      - name: nuget-cache
+        path: /root/.nuget/packages
+    commands:
+      - dotnet --info
+      - dotnet restore RealtimeDemo.sln
+      - dotnet test RealtimeDemo.sln --configuration Release --no-restore
+
+  - name: build-and-push-image
+    image: docker:27-cli
+    depends_on:
+      - test
+    environment:
+      REGISTRY_USER:
+        from_secret: registry_user
+      REGISTRY_PASSWORD:
+        from_secret: registry_password
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+    commands:
+      - COMMIT_SHORT_SHA="$(printf '%s' "$DRONE_COMMIT_SHA" | cut -c1-8)"
+      - IMAGE_REPO="localhost:5000/realtime-demo-api"
+      - IMAGE_TAG="$COMMIT_SHORT_SHA"
+      - IMAGE="$IMAGE_REPO:$IMAGE_TAG"
+      - echo "$REGISTRY_PASSWORD" | docker login localhost:5000 -u "$REGISTRY_USER" --password-stdin
+      - docker build -f Dockerfile -t "$IMAGE" .
+      - docker push "$IMAGE"
+    when:
+      branch:
+        - master
+      event:
+        - push
+
+  - name: deploy
+    image: alpine/helm:3.15.4
+    depends_on:
+      - build-and-push-image
+    environment:
+      KUBECTL_CONFIG:
+        from_secret: kubectl_config
+    commands:
+      - mkdir -p /root/.kube
+      - printf '%s' "$KUBECTL_CONFIG" > /root/.kube/config
+      - chmod 600 /root/.kube/config
+      - COMMIT_SHORT_SHA="$(printf '%s' "$DRONE_COMMIT_SHA" | cut -c1-8)"
+      - helm lint ./deploy/k8s/realtime-demo
+      - helm upgrade --install realtime-demo ./deploy/k8s/realtime-demo --namespace realtime-demo --create-namespace --set image.repository=localhost:5000/realtime-demo-api --set image.tag="$COMMIT_SHORT_SHA" --wait
+    when:
+      branch:
+        - master
+      event:
+        - push
+
+trigger:
+  event:
+    - push
+    - pull_request
